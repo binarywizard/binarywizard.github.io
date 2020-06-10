@@ -75,11 +75,7 @@
    * `of`——聚合方法，带有多个参数，返回该类型的一个实例，把它们合并起来，例如：
 
      ```java
-<<<<<<< HEAD
      Set<Rank> faceCards = EnumSet.of(JACK, QUEEN, KING);
-=======
-      Set<Rank> faceCards = EnumSet.of(JACK, QUEEN, KING);
->>>>>>> a1657e869db38e4dd940ce1724819180a2b94f2b
      ```
 
    * `valueOf`——比`from`和`of`更繁琐的一种替代方法，例如：
@@ -90,22 +86,14 @@
 
    *  `instance`或者`getInstance`——返回的实例是通过方法的（如有）参数来描述的，但是不能说与参数具有相同的值，例如
 
-<<<<<<< HEAD
      ```java
-=======
-     ```
->>>>>>> a1657e869db38e4dd940ce1724819180a2b94f2b
      StackWalker luke = StackWalker.getInstance(options);
      ```
 
    * `create`或者`newInstance`——能够确保每次调用都返回一个新的实例，例如：
 
      ```java
-<<<<<<< HEAD
      Object newArray = Array.newInstance(classObject, arrayLen);
-=======
-      Object newArray = Array.newInstance(classObject, arrayLen);
->>>>>>> a1657e869db38e4dd940ce1724819180a2b94f2b
      ```
 
    * `get{Type}`——像`getInstance`一样，但是在工厂方法处于不同的类中的时候使用。*Type*表示工厂方法所返回的对象类型，例如：
