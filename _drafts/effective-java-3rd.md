@@ -84,7 +84,7 @@
      BigInteger prime = BigInteger.valueOf(Integer.MAX_VALUE);
      ```
 
-   *  `instance`或者`getInstance`——返回的实例是通过方法的（如有）参数来描述的，但是不能说与参数具有相同的值，例如
+   *  `instance`或者`getInstance`——返回的实例是通过方法的（如有）参数来描述的，但是不能说与参数具有相同的值，例如：
 
      ```java
      StackWalker luke = StackWalker.getInstance(options);
