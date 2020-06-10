@@ -113,3 +113,163 @@
      ```java
      List<Complaint> litany = Collections.list(legacyLitany);
      ```
+
+## 第2条：遇到多个构造器参数时要考虑使用构建器
+
+1. 静态工厂和构造器有个共同的局限性：它们都不能很好地扩展到大量的可选参数。一般采用**重叠构造器（telescoping constructor）模式，第一个构造器只有必要的参数，第二个构造器有一个可选参数，第三个构造器有两个可选参数，依此类推，最后一个构造器包含所有可选的参数。
+
+2. 遇到许多可选的构造器参数时，可以用JavaBeans模式，先调用一个无参构造器来创建对象，然后再调用setter方法来设置每个必要的参数，以及每个相关的可选参数。但JavaBeans模式有着很严重的==缺点==，在构造过程中JavaBean可能处于不一致的状态，且该模式使得把类做成不可变的可能性不复存在，需要额外的工作来确保线程安全。
+
+3. 建造者（Builder）模式。
+
+   ```java
+   // Builder Pattern
+   public class NutritionFacts {
+     private final int servingSize;
+     private final int servings;
+     private final int calories;
+     private final int fat;
+     private final int sodium;
+     private final int carbohydrate;
+     
+     public static class Builder {
+       // Required parameters
+       private final int servingSize;
+       private final int servings;
+       
+       // Optional parameters - initialized to default values
+       private int calories = 0
+       private int fat = 0;
+       private int sodium = 0;
+       private int carbohydrate = 0;
+       
+       public Builder(int servingSize, int servings) {
+         this.servingSize = servingSize;
+         this.servings = servings;
+       }
+       
+       public Builder calories(int val) {
+         calories = val;
+         return this;
+       }
+       
+       public Builder fat(int val) {
+         fat = val;
+         return this;
+       }
+       
+       public Builder sodium(int val) {
+         sodium = val;
+         return this;
+       }
+       
+       public Builder carbohydrate(int val) {
+         carbohydrate = val;
+         return this;
+       }
+       
+       public NutritionFacts build() {
+         return new NutritionFacts(this);
+       }
+     }
+     
+     private NutritionFacts(Builder builder) {
+       servingSize = builder.servingSize;
+       servings = builder.servings;
+       calories = builder.calories;
+       fat = builder.fat;
+       sodium = builder.sodium;
+       carbohydrate = builder.carbohydrate;
+     }
+   }
+   ```
+
+4. 可以在builder的构造器和方法中检查参数的有效性，从builder复制完参数后，要检查对象域，如果检查失败，就抛出`IllegalArgumentException`。
+
+5. Builder模式也适用于类层次结构。
+
+   ```java
+   // Builder pattern for class hierarchies
+   public abstract class Pizza {
+     public enum Topping {
+       HAM, MUSHROOM, ONION, PEPPER, SAUSAGE
+     }
+     final Set<Topping> toppings;
+     
+     abstract static class Builder<T extends Builder<T>> {
+       EnumSet<Topping> toppings = EnumSet.noneOf(Topping.class);
+       public T addTopping(Topping topping) {
+         toppings.add(Objects.requireNonNull(topping));
+         return self();
+       }
+       abstract Pizza build();
+       // Subclasses must override this method to return "this"
+       protected abstract T self();
+     }
+     Pizza(Builder<?> builder) {
+       toppings = builder.toppings.clone();
+     }
+   }
+   
+   public class NyPizza extends Pizza {
+     public enum Size {
+       SMALL, MEDIUM, LARGE
+     }
+     private final Size size;
+     
+     public static class Builder extends Pizza.Builder<Builder> {
+       private final Size size;
+       
+       public Builder(Size size) {
+         this.size = Objects.requireNonNull(size);
+       }
+       
+       @Override
+       public NyPizza build() {
+         return new NyPizza(this);
+       }
+       
+       @Override
+       protected Builder self() {
+         return this;
+       }
+     }
+     
+     private NyPizza(Builder builder) {
+       super(builder);
+       size = builder.size;
+     }
+   }
+   
+   public class Calzone extends Pizza {
+     private final boolean sauceInside;
+     
+     public static class Builder extends PIzza.Builder<Builder> {
+       private boolean sauceInside = false; // Default
+       
+       public Builder sauceInside() {
+         sauceInside = true;
+         return this;
+       }
+       
+       @Override
+       public CalZone build() {
+         return new Calzone(this);
+       }
+       
+       @Override
+       protected Builder self() {
+         return this;
+       }
+     }
+     
+     private Calzone(Builder builder) {
+       super(builder);
+       sauceInside = builder.sauceInside;
+     }
+   }
+   ```
+
+   
+
+6. 与构造器相比，builder的微略优势在于可以有多个可变（varargs）参数。此外，构造器还可以将多次调用某一个方法而传入的参数集中到一个域中。通常最好一开始就使用构建器。
