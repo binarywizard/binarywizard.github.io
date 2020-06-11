@@ -273,3 +273,79 @@
    
 
 6. 与构造器相比，builder的微略优势在于可以有多个可变（varargs）参数。此外，构造器还可以将多次调用某一个方法而传入的参数集中到一个域中。通常最好一开始就使用构建器。
+
+## 第3条：用私有构造器或者枚举类型强化Singleton属性
+
+1. 实现Singleton有三种常见的方法。前两种方法都要保持构造器为私有的，并导出公有的静态成员，以便允许客户端能够访问该类的唯一实例。第一种方法，公有静态成员是个final域：
+
+   ```java
+   // Singleton with public final field
+   public class Elvis {
+     public static final Elvis INSTANCE = new Elvis();
+     private Elvis() { ... }
+     
+     public void leaveTheBuilding() { ... }
+   }
+   ```
+
+   第二种方法，公有的成员是个静态工厂方法：
+
+   ```java
+   // Singleton with sttic factory
+   public class Elvis {
+     private static final Elvis INSTANCE = new Elvis();
+     private Elvis() { ... }
+     public static Elvis getInstance() { return INSTANCE; }
+     
+     public void leaveTheBuilding() { ... }
+   }
+   ```
+
+   私有构造器仅被调用一次，用来实例化公有的静态final域Elvis.INSTANCE。由于缺少公有的或者受保护的构造器，所以保证了Elvis的全局唯一性：一旦Elvis类被实例化，将只会存在一个Elvis实例。
+
+   第三种方法，声明一个包含单个元素的枚举类型：
+
+   ```java
+   // Enum singleton - the preferred approach
+   public enum Elvis {
+     INSTANCE;
+     
+     public void leaveTheBuilding() { ... }
+   }
+   ```
+
+2. 破坏单例模式的情况：
+
+   * （反射）`AccessibleObject.setAccessible`方法，通过**反射**机制调用私有构造器
+
+   * （序列化、反序列化）为了维护并保证Singleton，必须声明所有实例域都是瞬时（transient）的，并提供一个`readResolve`方法。否则，每次反序列化一个序列化的实例时，都会创建一个新的实例。
+
+     ```java
+     // readResolve method to preserve singleton property
+     private Object readResolve() {
+       // Return the one true Elvis and let the garbage collector
+       // take care of the Elvis impersonator.
+       return INSTANCE;
+     }
+     ```
+   
+   > 注：单元素的枚举类型经常成为实现Singleton的最佳方法，可以面对复杂的序列化或者反射共计。
+
+## 第4条：通过私有构造器强化不可实例化的能力
+
+1. 工具类（utility class）不希望被实例化，可以让这个类包含一个私有构造器，它就不能被实例化：
+
+   ```java
+   public class UtilityClass {
+     // Suppress default constructor for noninstantiability
+     private UtilityClass() {
+       throw new AssertionError();
+     }
+     ... // Remainder omitted
+   }
+   ```
+
+2. 工具类使用私有构造器也有副作用，它使得一个类不能被子类化。所有的构造器都必须显示或隐式地调用超类构造器，在这种情形下，子类就没有可访问的超类构造器可调用了。
+
+## 第5条：优先考虑依赖注入来引用资源
+
